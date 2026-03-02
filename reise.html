@@ -405,9 +405,9 @@
       <div class="info-box">
         <strong>Tipp:</strong> Airbnb bietet leider keine öffentliche Such-API an. Nutze stattdessen diese Optionen:
         <ul style="margin-top:0.5rem;margin-left:1rem;">
-          <li><a href="https://www.booking.com/affiliate-program/v2/index.html" target="_blank" rel="noopener">Booking.com Affiliate API</a> – Hotels &amp; Apartments weltweit</li>
-          <li><a href="https://github.com/OpenBB-finance/openbb-agents" target="_blank" rel="noopener">OpenBNB</a> – Open-Source Airbnb-Suche</li>
-          <li>Direkt auf <a href="https://www.airbnb.com" target="_blank" rel="noopener">Airbnb</a> oder <a href="https://www.booking.com" target="_blank" rel="noopener">Booking.com</a> suchen</li>
+          <li><a href="https://www.booking.com/affiliate-program/v2/index.html" target="_blank" rel="noopener noreferrer" aria-label="Booking.com Affiliate API (öffnet in neuem Tab)">Booking.com Affiliate API</a> – Hotels &amp; Apartments weltweit</li>
+          <li><a href="https://github.com/OpenBB-finance/openbb-agents" target="_blank" rel="noopener noreferrer" aria-label="OpenBNB auf GitHub (öffnet in neuem Tab)">OpenBNB</a> – Open-Source Airbnb-Suche</li>
+          <li>Direkt auf <a href="https://www.airbnb.com" target="_blank" rel="noopener noreferrer" aria-label="Airbnb (öffnet in neuem Tab)">Airbnb</a> oder <a href="https://www.booking.com" target="_blank" rel="noopener noreferrer" aria-label="Booking.com (öffnet in neuem Tab)">Booking.com</a> suchen</li>
         </ul>
       </div>
       <form id="accommodation-form">
@@ -452,7 +452,7 @@
       <h3 style="font-size:0.95rem;margin-bottom:0.5rem;">✈️ Kiwi.com Tequila API</h3>
       <p>
         Registriere dich kostenlos auf
-        <a href="https://tequila.kiwi.com/portal/login" target="_blank" rel="noopener">tequila.kiwi.com</a>,
+        <a href="https://tequila.kiwi.com/portal/login" target="_blank" rel="noopener noreferrer" aria-label="Kiwi.com Tequila Portal (öffnet in neuem Tab)">tequila.kiwi.com</a>,
         erstelle eine „Solution" und kopiere deinen API-Key hierhin.
       </p>
       <div class="setting-row">
@@ -656,7 +656,7 @@
         if (flight.deep_link) {
           card.style.cursor = 'pointer';
           card.addEventListener('click', () => {
-            window.open(flight.deep_link, '_blank', 'noopener');
+            window.open(flight.deep_link, '_blank', 'noopener,noreferrer');
           });
         }
 
@@ -812,7 +812,7 @@
     });
 
     const url = 'https://www.booking.com/searchresults.html?' + params.toString();
-    window.open(url, '_blank', 'noopener');
+    window.open(url, '_blank', 'noopener,noreferrer');
 
     const container = document.getElementById('acc-results');
     container.innerHTML =
