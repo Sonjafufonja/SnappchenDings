@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SchnäppchenDings – Reise-Deals</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f5f5f5;
+      color: #222;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #c25200;
+      color: #fff;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    header h1 { font-size: 1.4rem; flex: 1; }
+    header nav a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 0.9rem;
+      opacity: 0.85;
+      padding: 0.3rem 0.7rem;
+      border: 1px solid rgba(255,255,255,0.4);
+      border-radius: 5px;
+    }
+    header nav a:hover { opacity: 1; background: rgba(255,255,255,0.15); }
+
+    main {
+      max-width: 800px;
+      margin: 1.5rem auto;
+      padding: 0 1rem;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 0.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 0.6rem;
+      border: 2px solid #c25200;
+      background: transparent;
+      color: #c25200;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .tab-btn.active {
+      background: #c25200;
+      color: #fff;
+    }
+
+    /* Panels */
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* Search Form */
+    .search-form {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .search-form h2 {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      color: #333;
+    }
+    .form-row {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-width: 140px;
+    }
+    .form-group label {
+      font-size: 0.8rem;
+      color: #666;
+      margin-bottom: 0.25rem;
+    }
+    .form-group input {
+      padding: 0.55rem 0.7rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 0.95rem;
+    }
+    .form-group input:focus {
+      outline: none;
+      border-color: #c25200;
+      box-shadow: 0 0 0 2px rgba(194,82,0,0.15);
+    }
+    .btn-search {
+      padding: 0.6rem 1.5rem;
+      background: #c25200;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      align-self: flex-end;
+    }
+    .btn-search:hover { background: #a04400; }
+    .btn-search:disabled { background: #ccc; cursor: not-allowed; }
+
+    /* Results */
+    .results-area {
+      min-height: 100px;
+    }
+    .result-card {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transition: box-shadow 0.15s;
+    }
+    .result-card:hover {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .result-card .icon {
+      font-size: 1.8rem;
+      flex-shrink: 0;
+    }
+    .result-card .details {
+      flex: 1;
+    }
+    .result-card .details .route {
+      font-weight: 600;
+      font-size: 1rem;
+      margin-bottom: 0.25rem;
+    }
+    .result-card .details .meta {
+      font-size: 0.85rem;
+      color: #666;
+      line-height: 1.4;
+    }
+    .result-card .price {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #2e7d32;
+      white-space: nowrap;
+    }
+    .result-card .price.unknown {
+      color: #999;
+      font-size: 0.9rem;
+      font-weight: 400;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: #999;
+    }
+    .loading .spinner {
+      display: inline-block;
+      width: 28px;
+      height: 28px;
+      border: 3px solid #ddd;
+      border-top-color: #c25200;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 0.5rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-msg {
+      background: #fff3f3;
+      border: 1px solid #e53935;
+      border-radius: 8px;
+      padding: 1rem;
+      color: #c62828;
+      font-size: 0.9rem;
+    }
+
+    .empty-msg {
+      text-align: center;
+      color: #999;
+      font-size: 0.95rem;
+      padding: 2rem 0;
+    }
+
+    /* Settings */
+    .settings-panel {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .settings-panel h2 {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      color: #333;
+    }
+    .settings-panel p {
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 1rem;
+      line-height: 1.5;
+    }
+    .settings-panel a { color: #c25200; }
+    .setting-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: flex-end;
+      margin-bottom: 0.75rem;
+    }
+    .setting-row .form-group { flex: 1; }
+    .btn-save {
+      padding: 0.55rem 1rem;
+      background: #4caf50;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .btn-save:hover { background: #388e3c; }
+    .saved-badge {
+      display: inline-block;
+      font-size: 0.8rem;
+      color: #4caf50;
+      margin-left: 0.5rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .saved-badge.show { opacity: 1; }
+
+    /* Info box */
+    .info-box {
+      background: #e3f2fd;
+      border: 1px solid #90caf9;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: #1565c0;
+      margin-bottom: 1rem;
+    }
+    .info-box a { color: #0d47a1; }
+    .info-box code {
+      background: rgba(0,0,0,0.06);
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      font-size: 0.85rem;
+    }
+
+    /* Autocomplete */
+    .autocomplete-wrapper { position: relative; }
+    .autocomplete-list {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 0 0 6px 6px;
+      max-height: 180px;
+      overflow-y: auto;
+      z-index: 10;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .autocomplete-list div {
+      padding: 0.5rem 0.7rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .autocomplete-list div:hover,
+    .autocomplete-list div.selected {
+      background: #f0f0f0;
+    }
+
+    @media (max-width: 500px) {
+      .form-row { flex-direction: column; }
+      .tabs { flex-wrap: wrap; }
+      .result-card { flex-direction: column; align-items: flex-start; }
+      .result-card .price { align-self: flex-end; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span aria-hidden="true">✈️</span>
+  <h1>SchnäppchenDings – Reise-Deals</h1>
+  <nav><a href="index.html">🏷️ Wunschliste</a></nav>
+</header>
+
+<main>
+  <div class="tabs" role="tablist" aria-label="Reise-Kategorie wählen">
+    <button class="tab-btn active" role="tab" aria-selected="true"  data-panel="flights">✈️ Flüge</button>
+    <button class="tab-btn"        role="tab" aria-selected="false" data-panel="trains">🚆 Bahn</button>
+    <button class="tab-btn"        role="tab" aria-selected="false" data-panel="accommodation">🏠 Unterkünfte</button>
+    <button class="tab-btn"        role="tab" aria-selected="false" data-panel="settings">⚙️ Einstellungen</button>
+  </div>
+
+  <!-- FLIGHTS PANEL -->
+  <div class="panel active" id="panel-flights">
+    <div class="search-form">
+      <h2>✈️ Flugsuche (Kiwi.com Tequila)</h2>
+      <form id="flight-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="flight-from">Von (IATA-Code)</label>
+            <input type="text" id="flight-from" placeholder="z.B. BER" maxlength="10" required />
+          </div>
+          <div class="form-group">
+            <label for="flight-to">Nach (IATA-Code)</label>
+            <input type="text" id="flight-to" placeholder="z.B. BCN" maxlength="10" required />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="flight-date-from">Hinflug ab</label>
+            <input type="date" id="flight-date-from" required />
+          </div>
+          <div class="form-group">
+            <label for="flight-date-to">Hinflug bis</label>
+            <input type="date" id="flight-date-to" required />
+          </div>
+          <div class="form-group">
+            <label for="flight-nights-from">Nächte min</label>
+            <input type="number" id="flight-nights-from" value="2" min="0" max="60" />
+          </div>
+          <div class="form-group">
+            <label for="flight-nights-to">Nächte max</label>
+            <input type="number" id="flight-nights-to" value="7" min="0" max="60" />
+          </div>
+        </div>
+        <div class="form-row">
+          <button type="submit" class="btn-search" id="btn-search-flights">🔍 Flüge suchen</button>
+        </div>
+      </form>
+    </div>
+    <div class="results-area" id="flight-results">
+      <p class="empty-msg">Gib deine Reisedaten ein und suche nach günstigen Flügen.</p>
+    </div>
+  </div>
+
+  <!-- TRAINS PANEL -->
+  <div class="panel" id="panel-trains">
+    <div class="search-form">
+      <h2>🚆 Bahnverbindung suchen (DB)</h2>
+      <div class="info-box">
+        💡 Die Bahnsuche nutzt die öffentliche <strong>DB transport.rest API</strong> – kostenlos und ohne API-Key nutzbar!
+      </div>
+      <form id="train-form">
+        <div class="form-row">
+          <div class="form-group autocomplete-wrapper">
+            <label for="train-from">Von</label>
+            <input type="text" id="train-from" placeholder="z.B. Berlin Hbf" autocomplete="off" required />
+            <div class="autocomplete-list" id="ac-train-from" hidden></div>
+          </div>
+          <div class="form-group autocomplete-wrapper">
+            <label for="train-to">Nach</label>
+            <input type="text" id="train-to" placeholder="z.B. München Hbf" autocomplete="off" required />
+            <div class="autocomplete-list" id="ac-train-to" hidden></div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="train-date">Datum</label>
+            <input type="date" id="train-date" required />
+          </div>
+          <div class="form-group">
+            <label for="train-time">Uhrzeit</label>
+            <input type="time" id="train-time" value="08:00" />
+          </div>
+        </div>
+        <div class="form-row">
+          <button type="submit" class="btn-search" id="btn-search-trains">🔍 Verbindung suchen</button>
+        </div>
+      </form>
+    </div>
+    <div class="results-area" id="train-results">
+      <p class="empty-msg">Gib Start und Ziel ein, um Bahnverbindungen zu finden.</p>
+    </div>
+  </div>
+
+  <!-- ACCOMMODATION PANEL -->
+  <div class="panel" id="panel-accommodation">
+    <div class="search-form">
+      <h2>🏠 Unterkünfte finden</h2>
+      <div class="info-box">
+        <strong>Tipp:</strong> Airbnb bietet leider keine öffentliche Such-API an. Nutze stattdessen diese Optionen:
+        <ul style="margin-top:0.5rem;margin-left:1rem;">
+          <li><a href="https://www.booking.com/affiliate-program/v2/index.html" target="_blank" rel="noopener noreferrer" aria-label="Booking.com Affiliate API (öffnet in neuem Tab)">Booking.com Affiliate API</a> – Hotels &amp; Apartments weltweit</li>
+          <li><a href="https://github.com/OpenBB-finance/openbb-agents" target="_blank" rel="noopener noreferrer" aria-label="OpenBNB auf GitHub (öffnet in neuem Tab)">OpenBNB</a> – Open-Source Airbnb-Suche</li>
+          <li>Direkt auf <a href="https://www.airbnb.com" target="_blank" rel="noopener noreferrer" aria-label="Airbnb (öffnet in neuem Tab)">Airbnb</a> oder <a href="https://www.booking.com" target="_blank" rel="noopener noreferrer" aria-label="Booking.com (öffnet in neuem Tab)">Booking.com</a> suchen</li>
+        </ul>
+      </div>
+      <form id="accommodation-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="acc-city">Stadt / Reiseziel</label>
+            <input type="text" id="acc-city" placeholder="z.B. Barcelona" required />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="acc-checkin">Check-in</label>
+            <input type="date" id="acc-checkin" required />
+          </div>
+          <div class="form-group">
+            <label for="acc-checkout">Check-out</label>
+            <input type="date" id="acc-checkout" required />
+          </div>
+          <div class="form-group">
+            <label for="acc-guests">Gäste</label>
+            <input type="number" id="acc-guests" value="2" min="1" max="20" />
+          </div>
+        </div>
+        <div class="form-row">
+          <button type="submit" class="btn-search" id="btn-search-acc">🔍 Auf Booking.com suchen</button>
+        </div>
+      </form>
+    </div>
+    <div class="results-area" id="acc-results">
+      <p class="empty-msg">Nutze die Suche oben, um Unterkünfte auf Booking.com zu finden.</p>
+    </div>
+  </div>
+
+  <!-- SETTINGS PANEL -->
+  <div class="panel" id="panel-settings">
+    <div class="settings-panel">
+      <h2>⚙️ API-Einstellungen</h2>
+      <p>
+        Trage hier deine API-Keys ein. Die Schlüssel werden <strong>nur lokal in deinem Browser</strong> gespeichert.
+      </p>
+
+      <h3 style="font-size:0.95rem;margin-bottom:0.5rem;">✈️ Kiwi.com Tequila API</h3>
+      <p>
+        Registriere dich kostenlos auf
+        <a href="https://tequila.kiwi.com/portal/login" target="_blank" rel="noopener noreferrer" aria-label="Kiwi.com Tequila Portal (öffnet in neuem Tab)">tequila.kiwi.com</a>,
+        erstelle eine „Solution" und kopiere deinen API-Key hierhin.
+      </p>
+      <div class="setting-row">
+        <div class="form-group">
+          <label for="kiwi-api-key">Kiwi.com API-Key</label>
+          <input type="password" id="kiwi-api-key" placeholder="Dein API-Key …" autocomplete="off" />
+        </div>
+        <button class="btn-save" id="btn-save-kiwi">Speichern</button>
+        <span class="saved-badge" id="kiwi-saved">✔ Gespeichert</span>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <strong>🚆 DB transport.rest</strong> benötigt keinen API-Key – die Bahn-Suche funktioniert sofort!
+    </div>
+  </div>
+</main>
+
+<script>
+  /* ───── Config / Storage ───── */
+  const CONFIG_KEY = 'snappchen-reise-config';
+
+  function loadConfig() {
+    try { return JSON.parse(localStorage.getItem(CONFIG_KEY)) || {}; }
+    catch { return {}; }
+  }
+
+  function saveConfig(cfg) {
+    localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
+  }
+
+  /* ───── Tab Switching ───── */
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.toggle('active', b === btn);
+        b.setAttribute('aria-selected', b === btn ? 'true' : 'false');
+      });
+      document.querySelectorAll('.panel').forEach(p => {
+        p.classList.toggle('active', p.id === 'panel-' + btn.dataset.panel);
+      });
+    });
+  });
+
+  /* ───── Helpers ───── */
+  function showLoading(container) {
+    container.innerHTML = '<div class="loading"><div class="spinner"></div><br>Suche läuft …</div>';
+  }
+
+  function showError(container, msg) {
+    container.innerHTML = '<div class="error-msg">' + escapeHtml(msg) + '</div>';
+  }
+
+  function showEmpty(container, msg) {
+    container.innerHTML = '<p class="empty-msg">' + escapeHtml(msg) + '</p>';
+  }
+
+  function escapeHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  function formatDate(dateStr) {
+    try {
+      return new Date(dateStr).toLocaleDateString('de-DE', {
+        day: '2-digit', month: '2-digit', year: 'numeric'
+      });
+    } catch { return dateStr; }
+  }
+
+  function formatTime(dateStr) {
+    try {
+      return new Date(dateStr).toLocaleTimeString('de-DE', {
+        hour: '2-digit', minute: '2-digit'
+      });
+    } catch { return ''; }
+  }
+
+  function formatDuration(minutes) {
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return h > 0 ? h + 'h ' + m + 'min' : m + 'min';
+  }
+
+  function toKiwiDate(dateStr) {
+    const d = new Date(dateStr);
+    return String(d.getDate()).padStart(2, '0') + '/' +
+           String(d.getMonth() + 1).padStart(2, '0') + '/' +
+           d.getFullYear();
+  }
+
+  /* Set default dates to tomorrow / +14 days */
+  (function setDefaultDates() {
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const twoWeeks = new Date(today);
+    twoWeeks.setDate(twoWeeks.getDate() + 14);
+
+    const fmt = d => d.toISOString().split('T')[0];
+    document.getElementById('flight-date-from').value = fmt(tomorrow);
+    document.getElementById('flight-date-to').value = fmt(twoWeeks);
+    document.getElementById('train-date').value = fmt(tomorrow);
+    document.getElementById('acc-checkin').value = fmt(tomorrow);
+    const checkout = new Date(tomorrow);
+    checkout.setDate(checkout.getDate() + 3);
+    document.getElementById('acc-checkout').value = fmt(checkout);
+  })();
+
+  /* ───── Settings ───── */
+  (function initSettings() {
+    const cfg = loadConfig();
+    const kiwiInput = document.getElementById('kiwi-api-key');
+    if (cfg.kiwiApiKey) kiwiInput.value = cfg.kiwiApiKey;
+
+    document.getElementById('btn-save-kiwi').addEventListener('click', () => {
+      const c = loadConfig();
+      c.kiwiApiKey = kiwiInput.value.trim();
+      saveConfig(c);
+      const badge = document.getElementById('kiwi-saved');
+      badge.classList.add('show');
+      setTimeout(() => badge.classList.remove('show'), 2000);
+    });
+  })();
+
+  /* ───── FLIGHTS (Kiwi.com Tequila API) ───── */
+  document.getElementById('flight-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const cfg = loadConfig();
+    const container = document.getElementById('flight-results');
+
+    if (!cfg.kiwiApiKey) {
+      showError(container, 'Bitte trage zuerst deinen Kiwi.com API-Key in den Einstellungen ein.');
+      return;
+    }
+
+    const from = document.getElementById('flight-from').value.trim().toUpperCase();
+    const to = document.getElementById('flight-to').value.trim().toUpperCase();
+    const dateFrom = toKiwiDate(document.getElementById('flight-date-from').value);
+    const dateTo = toKiwiDate(document.getElementById('flight-date-to').value);
+    const nightsFrom = document.getElementById('flight-nights-from').value || '2';
+    const nightsTo = document.getElementById('flight-nights-to').value || '7';
+
+    showLoading(container);
+
+    const params = new URLSearchParams({
+      fly_from: from,
+      fly_to: to,
+      date_from: dateFrom,
+      date_to: dateTo,
+      nights_in_dst_from: nightsFrom,
+      nights_in_dst_to: nightsTo,
+      flight_type: 'round',
+      curr: 'EUR',
+      locale: 'de',
+      limit: '15',
+      sort: 'price',
+      asc: '1'
+    });
+
+    try {
+      const resp = await fetch('https://api.tequila.kiwi.com/v2/search?' + params.toString(), {
+        headers: { 'apikey': cfg.kiwiApiKey }
+      });
+
+      if (!resp.ok) {
+        const text = await resp.text();
+        throw new Error('API-Fehler (' + resp.status + '): ' + text.slice(0, 200));
+      }
+
+      const data = await resp.json();
+
+      if (!data.data || data.data.length === 0) {
+        showEmpty(container, 'Keine Flüge gefunden. Versuche andere Daten oder Ziele.');
+        return;
+      }
+
+      container.innerHTML = '';
+      data.data.forEach(flight => {
+        const card = document.createElement('div');
+        card.className = 'result-card';
+
+        const durationMin = Math.round((flight.duration.total || 0) / 60);
+        const stops = flight.route ? flight.route.length - 1 : 0;
+        const stopsText = stops === 0 ? 'Direkt' : stops + ' Stopp' + (stops > 1 ? 's' : '');
+        const airlines = [...new Set((flight.route || []).map(r => r.airline))].join(', ');
+
+        card.innerHTML =
+          '<div class="icon">✈️</div>' +
+          '<div class="details">' +
+            '<div class="route">' + escapeHtml(flight.cityFrom) + ' → ' + escapeHtml(flight.cityTo) + '</div>' +
+            '<div class="meta">' +
+              escapeHtml(formatDate(flight.local_departure)) + ' – ' + escapeHtml(formatDate(flight.local_arrival)) +
+              '<br>' + escapeHtml(stopsText) + ' · ' + escapeHtml(formatDuration(durationMin)) +
+              '<br>Airlines: ' + escapeHtml(airlines) +
+            '</div>' +
+          '</div>' +
+          '<div class="price">' + escapeHtml(flight.price + ' €') + '</div>';
+
+        if (flight.deep_link) {
+          card.style.cursor = 'pointer';
+          card.addEventListener('click', () => {
+            window.open(flight.deep_link, '_blank', 'noopener,noreferrer');
+          });
+        }
+
+        container.appendChild(card);
+      });
+    } catch (err) {
+      showError(container, 'Fehler bei der Flugsuche: ' + err.message);
+    }
+  });
+
+  /* ───── TRAINS (DB transport.rest) ───── */
+  let trainFromId = null;
+  let trainToId = null;
+
+  async function searchStations(query) {
+    if (query.length < 2) return [];
+    const url = 'https://v6.db.transport.rest/locations?query=' +
+      encodeURIComponent(query) + '&results=5&fuzzy=true&stops=true&addresses=false&poi=false';
+    const resp = await fetch(url);
+    if (!resp.ok) return [];
+    return resp.json();
+  }
+
+  function setupAutocomplete(inputId, listId, onSelect) {
+    const input = document.getElementById(inputId);
+    const list = document.getElementById(listId);
+    let debounce = null;
+
+    input.addEventListener('input', () => {
+      clearTimeout(debounce);
+      debounce = setTimeout(async () => {
+        const q = input.value.trim();
+        if (q.length < 2) { list.hidden = true; return; }
+        const stations = await searchStations(q);
+        list.innerHTML = '';
+        if (stations.length === 0) { list.hidden = true; return; }
+        stations.forEach(s => {
+          const div = document.createElement('div');
+          div.textContent = s.name || s.address;
+          div.addEventListener('click', () => {
+            input.value = s.name || s.address;
+            onSelect(s.id);
+            list.hidden = true;
+          });
+          list.appendChild(div);
+        });
+        list.hidden = false;
+      }, 300);
+    });
+
+    input.addEventListener('blur', () => {
+      setTimeout(() => { list.hidden = true; }, 200);
+    });
+  }
+
+  setupAutocomplete('train-from', 'ac-train-from', id => { trainFromId = id; });
+  setupAutocomplete('train-to', 'ac-train-to', id => { trainToId = id; });
+
+  document.getElementById('train-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const container = document.getElementById('train-results');
+
+    if (!trainFromId || !trainToId) {
+      showError(container, 'Bitte wähle Start- und Zielstation aus der Vorschlagsliste aus.');
+      return;
+    }
+
+    const date = document.getElementById('train-date').value;
+    const time = document.getElementById('train-time').value || '08:00';
+    const departure = new Date(date + 'T' + time + ':00').toISOString();
+
+    showLoading(container);
+
+    try {
+      const params = new URLSearchParams({
+        from: trainFromId,
+        to: trainToId,
+        departure: departure,
+        results: '10',
+        stopovers: 'false',
+        transfers: '-1',
+        transferTime: '0',
+        language: 'de'
+      });
+
+      const resp = await fetch('https://v6.db.transport.rest/journeys?' + params.toString());
+
+      if (!resp.ok) {
+        throw new Error('DB API-Fehler (' + resp.status + ')');
+      }
+
+      const data = await resp.json();
+      const journeys = data.journeys || [];
+
+      if (journeys.length === 0) {
+        showEmpty(container, 'Keine Verbindungen gefunden.');
+        return;
+      }
+
+      container.innerHTML = '';
+      journeys.forEach(j => {
+        const card = document.createElement('div');
+        card.className = 'result-card';
+
+        const legs = j.legs || [];
+        const dep = legs[0];
+        const arr = legs[legs.length - 1];
+        const transfers = legs.length - 1;
+        const transfersText = transfers === 0 ? 'Direkt' : transfers + ' Umstieg' + (transfers > 1 ? 'e' : '');
+        const products = legs.map(l => (l.line && l.line.name) || l.walking ? '🚶' : '?').join(' → ');
+
+        let priceHtml = '<div class="price unknown">Preis: siehe DB</div>';
+        if (j.price && j.price.amount != null) {
+          priceHtml = '<div class="price">' + escapeHtml(j.price.amount.toFixed(2) + ' ' + (j.price.currency || '€')) + '</div>';
+        }
+
+        card.innerHTML =
+          '<div class="icon">🚆</div>' +
+          '<div class="details">' +
+            '<div class="route">' + escapeHtml((dep.origin && dep.origin.name) || '?') + ' → ' + escapeHtml((arr.destination && arr.destination.name) || '?') + '</div>' +
+            '<div class="meta">' +
+              'Abfahrt: ' + escapeHtml(formatTime(dep.departure)) + ' · Ankunft: ' + escapeHtml(formatTime(arr.arrival)) +
+              '<br>' + escapeHtml(transfersText) + ' · ' + escapeHtml(products) +
+            '</div>' +
+          '</div>' +
+          priceHtml;
+
+        container.appendChild(card);
+      });
+    } catch (err) {
+      showError(container, 'Fehler bei der Bahn-Suche: ' + err.message);
+    }
+  });
+
+  /* ───── ACCOMMODATION (Booking.com redirect) ───── */
+  document.getElementById('accommodation-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    const city = document.getElementById('acc-city').value.trim();
+    const checkin = document.getElementById('acc-checkin').value;
+    const checkout = document.getElementById('acc-checkout').value;
+    const guests = document.getElementById('acc-guests').value || '2';
+
+    if (!city) return;
+
+    const params = new URLSearchParams({
+      ss: city,
+      checkin: checkin,
+      checkout: checkout,
+      group_adults: guests,
+      no_rooms: '1',
+      order: 'price'
+    });
+
+    const url = 'https://www.booking.com/searchresults.html?' + params.toString();
+    window.open(url, '_blank', 'noopener,noreferrer');
+
+    const container = document.getElementById('acc-results');
+    container.innerHTML =
+      '<div class="info-box">' +
+        '🔗 Booking.com wurde in einem neuen Tab geöffnet für: <strong>' + escapeHtml(city) + '</strong><br>' +
+        'Check-in: ' + escapeHtml(formatDate(checkin)) + ' · Check-out: ' + escapeHtml(formatDate(checkout)) +
+      '</div>';
+  });
+</script>
+
+</body>
+</html>
